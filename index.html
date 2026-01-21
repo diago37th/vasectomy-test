@@ -315,11 +315,11 @@
 
                             {/* 結果配圖區域 */}
                             {result.image && (
-                                <div className="w-full h-64 overflow-hidden">
+                                <div className="w-full overflow-hidden">
                                     <img 
                                         src={result.image} 
                                         alt="Result illustration"
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-auto block"
                                     />
                                 </div>
                             )}
@@ -485,11 +485,11 @@
 
                         {/* Question Image */}
                         {question.image && (
-                            <div className="w-full h-48 overflow-hidden">
+                            <div className="w-full overflow-hidden">
                                 <img 
                                     src={question.image} 
                                     alt={`Question ${currentQuestion + 1}`}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-auto block"
                                 />
                             </div>
                         )}
