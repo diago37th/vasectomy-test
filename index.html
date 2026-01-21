@@ -5,8 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>紳士結紮資格檢定 - 桃園高美泌尿科</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* PDF匯出專用樣式 */
+        .pdf-page-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        .pdf-no-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        @media print {
+            .pdf-page-break {
+                page-break-inside: avoid;
+            }
+            .pdf-no-break {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-amber-50 min-h-screen py-8 px-4">
     <div id="root"></div>
@@ -22,7 +40,7 @@
         // 🎨 圖片設定區 - 在這裡替換你的圖片網址
         // ==========================================
         const IMAGES = {
-            header:"images/header.webp",
+            header: "images/header.webp",
             question1: "images/q1.webp",
             question2: "images/q2.webp",
             question3: "images/q3.webp",
@@ -247,38 +265,51 @@
                 setIsExporting(true);
                 try {
                     const element = document.getElementById('result-container');
-                    const canvas = await html2canvas(element, {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff'
+                    
+                    // 在匯出前為所有需要保持完整的區塊添加class
+                    const blockElements = element.querySelectorAll('.bg-amber-50, .bg-slate-50, .bg-orange-50, .rounded-xl');
+                    blockElements.forEach(el => {
+                        el.classList.add('pdf-no-break');
                     });
                     
-                    const imgData = canvas.toDataURL('image/png');
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: 'a4'
+                    // 配置選項
+                    const opt = {
+                        margin: [10, 10, 10, 10],
+                        filename: `紳士結紮資格檢定_${testDate.getFullYear()}${(testDate.getMonth()+1).toString().padStart(2,'0')}${testDate.getDate().toString().padStart(2,'0')}.pdf`,
+                        image: { 
+                            type: 'jpeg', 
+                            quality: 0.98 
+                        },
+                        html2canvas: { 
+                            scale: 2,
+                            useCORS: true,
+                            logging: false,
+                            letterRendering: true,
+                            scrollY: 0,
+                            scrollX: 0
+                        },
+                        jsPDF: { 
+                            unit: 'mm', 
+                            format: 'a4', 
+                            orientation: 'portrait',
+                            compress: true
+                        },
+                        pagebreak: { 
+                            mode: ['avoid-all', 'css', 'legacy'],
+                            before: '.pdf-page-break',
+                            after: [],
+                            avoid: ['.pdf-no-break', '.rounded-xl', 'img']
+                        }
+                    };
+                    
+                    // 生成PDF
+                    await html2pdf().set(opt).from(element).save();
+                    
+                    // 移除臨時添加的class
+                    blockElements.forEach(el => {
+                        el.classList.remove('pdf-no-break');
                     });
                     
-                    const imgWidth = 210;
-                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                    let heightLeft = imgHeight;
-                    let position = 0;
-                    
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= 297;
-                    
-                    while (heightLeft > 0) {
-                        position = heightLeft - imgHeight;
-                        pdf.addPage();
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= 297;
-                    }
-                    
-                    const fileName = `紳士結紮資格檢定_${testDate.getFullYear()}${(testDate.getMonth()+1).toString().padStart(2,'0')}${testDate.getDate().toString().padStart(2,'0')}.pdf`;
-                    pdf.save(fileName);
                 } catch (error) {
                     alert('PDF 生成失敗，請稍後再試');
                     console.error('PDF export error:', error);
@@ -315,11 +346,11 @@
 
                             {/* 結果配圖區域 */}
                             {result.image && (
-                                <div className="w-full overflow-hidden">
+                                <div className="w-full h-64 overflow-hidden">
                                     <img 
                                         src={result.image} 
                                         alt="Result illustration"
-                                        className="w-full h-auto block"
+                                        className="w-full h-full object-cover"
                                     />
                                 </div>
                             )}
@@ -485,11 +516,11 @@
 
                         {/* Question Image */}
                         {question.image && (
-                            <div className="w-full overflow-hidden">
+                            <div className="w-full h-48 overflow-hidden">
                                 <img 
                                     src={question.image} 
                                     alt={`Question ${currentQuestion + 1}`}
-                                    className="w-full h-auto block"
+                                    className="w-full h-full object-cover"
                                 />
                             </div>
                         )}
