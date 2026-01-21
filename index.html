@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+       <style>
         /* PDF匯出專用樣式 */
         .pdf-page-break {
             page-break-inside: avoid !important;
@@ -16,6 +17,16 @@
             page-break-inside: avoid !important;
             break-inside: avoid !important;
         }
+
+        /* 💡 新加入：解決圖片被壓扁或跑位的關鍵設定 */
+        #result-container img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            margin: 0 auto !important;
+            object-fit: contain !important; /* 確保圖片在容器內完整縮放不裁切 */
+        }
+
         @media print {
             .pdf-page-break {
                 page-break-inside: avoid;
@@ -24,6 +35,7 @@
                 page-break-inside: avoid;
             }
         }
+    </style>
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-amber-50 min-h-screen py-8 px-4">
@@ -278,10 +290,10 @@
                         filename: `紳士結紮資格檢定_${testDate.getFullYear()}${(testDate.getMonth()+1).toString().padStart(2,'0')}${testDate.getDate().toString().padStart(2,'0')}.pdf`,
                         image: { 
                             type: 'jpeg', 
-                            quality: 0.98 
+                            quality: 0.75 
                         },
                         html2canvas: { 
-                            scale: 2,
+                            scale: 1.5,
                             useCORS: true,
                             logging: false,
                             letterRendering: true,
@@ -346,11 +358,11 @@
 
                             {/* 結果配圖區域 */}
                             {result.image && (
-                                <div className="w-full h-64 overflow-hidden">
+                                <div className="w-full flex justify-center bg-slate-100">
                                     <img 
                                         src={result.image} 
                                         alt="Result illustration"
-                                        className="w-full h-full object-cover"
+                                        className="max-w-full h-auto object-contain"
                                     />
                                 </div>
                             )}
@@ -516,11 +528,11 @@
 
                         {/* Question Image */}
                         {question.image && (
-                            <div className="w-full h-48 overflow-hidden">
+                            <div className="w-full flex justify-center bg-slate-100">
                                 <img 
                                     src={question.image} 
                                     alt={`Question ${currentQuestion + 1}`}
-                                    className="w-full h-full object-cover"
+                                    className="max-w-full h-auto object-contain"
                                 />
                             </div>
                         )}
