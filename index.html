@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紳士結紮資格檢定 - 桃園高美泌尿科</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-amber-50 min-h-screen py-8 px-4">
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+        // ==========================================
+        // 🎨 圖片設定區 - 在這裡替換你的圖片網址
+        // ==========================================
+        const IMAGES = {
+            header: null,
+            question1: null,
+            question2: null,
+            question3: null,
+            question4: null,
+            question5: null,
+            question6: null,
+            question7: null,
+            question8: null,
+            question9: null,
+            question10: null,
+            resultA: null,
+            resultB: null,
+            resultC: null,
+        };
+
+        const questions = [
+            {
+                id: 1,
+                question: "關於您的家庭規劃狀態？",
+                icon: "👨‍👩‍👧‍👦",
+                image: IMAGES.question1,
+                options: [
+                    { text: "已有2個以上孩子，確定不再生育", score: 10 },
+                    { text: "有1-2個孩子，目前傾向不再生", score: 5 },
+                    { text: "還沒有小孩，或未來可能想再生", score: 0 }
+                ]
+            },
+            {
+                id: 2,
+                question: "您的伴侶對這個決定的態度？",
+                icon: "💑",
+                image: IMAGES.question2,
+                options: [
+                    { text: "我們已經開過家庭會議，雙方完全同意並支持", score: 10 },
+                    { text: "她知道，但我們還在討論細節中", score: 5 },
+                    { text: "這是我的個人決定，沒打算讓她知道", score: 0 }
+                ]
+            },
+            {
+                id: 3,
+                question: "關於結紮的「永久不可逆性」您的理解？【關鍵題】",
+                icon: "🔒",
+                image: IMAGES.question3,
+                critical: true,
+                options: [
+                    { text: "我理解這是永久的決定，我已將今日視為生育功能的終點", score: 10 },
+                    { text: "知道很難接回，但覺得以後真的後悔再花錢接就好", score: 5 },
+                    { text: "只是暫時避孕，未來若換伴侶可能會想接回去", score: 0 }
+                ]
+            },
+            {
+                id: 4,
+                question: "您相信結紮「不會」影響性功能嗎？",
+                icon: "💪",
+                image: IMAGES.question4,
+                options: [
+                    { text: "相信科學！結紮只擋精蟲不擋荷爾蒙，硬度與性慾不變", score: 10 },
+                    { text: "理智上相信，但心理還是有點擔心會不會變軟", score: 5 },
+                    { text: "非常擔心會影響雄風，想做手術但內心很恐懼", score: 0 }
+                ]
+            },
+            {
+                id: 5,
+                question: "術後第一週（關鍵7天）您能完全禁慾嗎？",
+                icon: "🚫",
+                image: IMAGES.question5,
+                options: [
+                    { text: "沒問題，為了傷口安全復原，我會嚴格遵守禁慾規定", score: 10 },
+                    { text: "會盡力配合，但怕生理衝動難以忍受", score: 5 },
+                    { text: "不行，我想術後當晚就測試功能是否正常", score: 0 }
+                ]
+            },
+            {
+                id: 6,
+                question: "您願意遵守「排空期」規定嗎？（射精20次+滿3個月）【關鍵題】",
+                icon: "📅",
+                image: IMAGES.question6,
+                critical: true,
+                options: [
+                    { text: "沒問題！我會確實避孕，直到回診化驗確認無精蟲", score: 10 },
+                    { text: "會記次數，但覺得三個月太久，可能會提早無套", score: 5 },
+                    { text: "做完手術就是為了馬上無套，不然做手術幹嘛？", score: 0 }
+                ]
+            },
+            {
+                id: 7,
+                question: "您對手術風險（如1%血腫或感染）的接受度？",
+                icon: "⚕️",
+                image: IMAGES.question7,
+                options: [
+                    { text: "理解任何手術都有風險，我信任醫師的專業處理", score: 10 },
+                    { text: "能接受，但如果真的發生了，我會非常焦慮", score: 5 },
+                    { text: "我要求100%完美，不能有任何疼痛、瘀青或意外", score: 0 }
+                ]
+            },
+            {
+                id: 8,
+                question: "驗收日：您保證會帶精液樣本回診檢查嗎？",
+                icon: "🔬",
+                image: IMAGES.question8,
+                options: [
+                    { text: "絕對會！拿到醫師開立的「無精蟲證明」後才解禁", score: 10 },
+                    { text: "如果有空就會回診，沒空就不管了", score: 5 },
+                    { text: "回診太麻煩，我覺得自己感覺沒精了就好", score: 0 }
+                ]
+            },
+            {
+                id: 9,
+                question: "誰是這項手術最主要的提議者？【關鍵題】",
+                icon: "🤴",
+                image: IMAGES.question9,
+                critical: true,
+                options: [
+                    { text: "我主動提出的，經過深思熟慮後的決定", score: 10 },
+                    { text: "是伴侶建議，但我自己也認同這個選擇", score: 5 },
+                    { text: "完全是被迫的，我其實很不願意", score: 0 }
+                ]
+            },
+            {
+                id: 10,
+                question: "若復原進度不如預期，您的心理反應是？",
+                icon: "🌊",
+                image: IMAGES.question10,
+                options: [
+                    { text: "保持冷靜，遵照醫囑回診，與醫師充分溝通配合", score: 10 },
+                    { text: "會感到恐慌，頻繁上網查資料或打電話詢問櫃檯", score: 5 },
+                    { text: "會覺得手術失敗，對醫師感到不滿甚至產生怒火", score: 0 }
+                ]
+            }
+        ];
+
+        function App() {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [showResult, setShowResult] = useState(false);
+            const [testDate] = useState(new Date());
+            const [isExporting, setIsExporting] = useState(false);
+
+            const handleAnswer = (score) => {
+                const newAnswers = { 
+                    ...answers, 
+                    [currentQuestion]: {
+                        question: questions[currentQuestion].question,
+                        answer: questions[currentQuestion].options.find(opt => opt.score === score).text,
+                        score: score,
+                        critical: questions[currentQuestion].critical || false
+                    }
+                };
+                setAnswers(newAnswers);
+
+                if (currentQuestion < questions.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                } else {
+                    setShowResult(true);
+                }
+            };
+
+            const totalScore = Object.values(answers).reduce((sum, answer) => sum + answer.score, 0);
+
+            const getResult = () => {
+                // 檢查關鍵題是否有0分（一票否決）
+                const criticalFail = Object.values(answers).some(answer => 
+                    answer.critical && answer.score === 0
+                );
+
+                const hasCriticalWarning = Object.values(answers).some(answer => 
+                    answer.critical && answer.score < 10
+                );
+
+                if (totalScore >= 80 && !criticalFail) {
+                    return {
+                        title: "🏆 優雅紳士",
+                        grade: "A級頂級候選人",
+                        description: "恭喜！您的身心準備度、家庭共識以及對醫療知識的理解都已經達到最高標準。您展現了成熟男人的責任感，是極為適合進行結紮手術的優質候選人。",
+                        recommendation: "建議行動",
+                        action: "您可以直接預約門診，與陳冠廷院長討論手術細節與時程安排。我們將優先為您安排手術時段。",
+                        contact: "請透過 Facebook 粉絲專頁【桃園高美泌尿科】私訊預約，並下載您的評估結果PDF回傳給我們",
+                        color: "from-amber-400 to-yellow-600",
+                        bgColor: "bg-amber-50",
+                        borderColor: "border-amber-300",
+                        image: IMAGES.resultA
+                    };
+                } else if (totalScore >= 50 || criticalFail) {
+                    let warningText = "";
+                    if (criticalFail) {
+                        warningText = "⚠️ 您在關鍵題項（永久認知、排空期遵守、主動意願）中有嚴重疑慮。即使總分不低，這些項目若未釐清，未來極易產生遺憾或醫療糾紛。";
+                    } else if (hasCriticalWarning) {
+                        warningText = "⚠️ 您在關鍵題項中仍有猶豫。建議先釐清這些疑慮。";
+                    }
+
+                    return {
+                        title: "⚠️ 審慎評估者",
+                        grade: "B級候選人",
+                        description: criticalFail || hasCriticalWarning
+                            ? warningText + " 建議先來門診與陳冠廷院長詳細討論，把心中的疑問徹底解開後，再決定是否進行手術。"
+                            : "您對結紮手術展現了興趣，但在某些關鍵面向上還需要更多思考與準備。可能是伴侶共識尚未完全建立，或是對手術的永久性質仍有疑慮。",
+                        recommendation: "建議行動",
+                        action: "建議先來門診諮詢，讓陳冠廷院長為您詳細說明，解答您的疑慮後再做決定。不要急著動刀，給自己更多思考時間。",
+                        contact: "請透過 Facebook 粉絲專頁【桃園高美泌尿科】私訊預約諮詢門診",
+                        color: "from-orange-400 to-amber-500",
+                        bgColor: "bg-orange-50",
+                        borderColor: "border-orange-300",
+                        image: IMAGES.resultB
+                    };
+                } else {
+                    return {
+                        title: "🛑 暫緩評估者",
+                        grade: "C級 - 建議暫緩",
+                        description: "目前您的準備度尚未達到適合接受結紮手術的標準。結紮是一項永久性的決定，目前的準備狀態可能會造成未來巨大的心理負擔或家庭問題。",
+                        recommendation: "建議行動",
+                        action: "建議您先暫緩此決定，維持現有的避孕方式。給自己與伴侶更多時間思考和討論。本診所目前不建議為您進行此手術。",
+                        contact: "如需諮詢請透過 Facebook 粉絲專頁【桃園高美泌尿科】私訊，或再次檢視您的決定",
+                        color: "from-slate-400 to-slate-600",
+                        bgColor: "bg-slate-50",
+                        borderColor: "border-slate-300",
+                        image: IMAGES.resultC
+                    };
+                }
+            };
+
+            const exportToPDF = async () => {
+                setIsExporting(true);
+                try {
+                    const element = document.getElementById('result-container');
+                    const canvas = await html2canvas(element, {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const imgWidth = 210;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= 297;
+                    
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= 297;
+                    }
+                    
+                    const fileName = `紳士結紮資格檢定_${testDate.getFullYear()}${(testDate.getMonth()+1).toString().padStart(2,'0')}${testDate.getDate().toString().padStart(2,'0')}.pdf`;
+                    pdf.save(fileName);
+                } catch (error) {
+                    alert('PDF 生成失敗，請稍後再試');
+                    console.error('PDF export error:', error);
+                } finally {
+                    setIsExporting(false);
+                }
+            };
+
+            const restart = () => {
+                setCurrentQuestion(0);
+                setAnswers({});
+                setShowResult(false);
+            };
+
+            if (showResult) {
+                const result = getResult();
+                const criticalAnswers = Object.values(answers).filter(a => a.critical);
+                
+                return (
+                    <div className="max-w-3xl mx-auto">
+                        <div id="result-container" className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                            {/* 結果標題區 */}
+                            <div className={`bg-gradient-to-r ${result.color} text-white p-8 relative overflow-hidden`}>
+                                <div className="absolute top-0 right-0 text-9xl opacity-10">
+                                    {result.title.split(' ')[0]}
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="text-sm font-medium mb-2 opacity-90">評估完成</div>
+                                    <h2 className="text-4xl font-bold mb-3">{result.title}</h2>
+                                    <div className="text-2xl font-semibold">{result.grade}</div>
+                                    <div className="mt-4 text-xl">總分：{totalScore} / 100</div>
+                                </div>
+                            </div>
+
+                            {/* 結果配圖區域 */}
+                            {result.image && (
+                                <div className="w-full h-64 overflow-hidden">
+                                    <img 
+                                        src={result.image} 
+                                        alt="Result illustration"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            )}
+
+                            {/* 結果內容 */}
+                            <div className="p-8">
+                                {/* 評估結果 */}
+                                <div className={`${result.bgColor} border-2 ${result.borderColor} rounded-xl p-6 mb-6`}>
+                                    <h3 className="text-lg font-bold text-gray-800 mb-3">📋 評估結果</h3>
+                                    <p className="text-gray-700 leading-relaxed">{result.description}</p>
+                                </div>
+
+                                {/* 關鍵題檢視 */}
+                                {criticalAnswers.length > 0 && (
+                                    <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-6 mb-6">
+                                        <h3 className="text-lg font-bold text-amber-800 mb-3">🔑 關鍵題檢視</h3>
+                                        <p className="text-sm text-amber-700 mb-3">以下是影響手術決策的關鍵項目：</p>
+                                        <div className="space-y-2">
+                                            {criticalAnswers.map((answer, index) => (
+                                                <div key={index} className={`flex items-center gap-2 p-3 rounded-lg ${
+                                                    answer.score === 10 ? 'bg-green-100' : 
+                                                    answer.score === 5 ? 'bg-yellow-100' : 'bg-red-100'
+                                                }`}>
+                                                    <span className="text-2xl">
+                                                        {answer.score === 10 ? '✓' : answer.score === 5 ? '⚠️' : '❌'}
+                                                    </span>
+                                                    <div className="flex-1">
+                                                        <div className="text-sm font-medium text-gray-800">
+                                                            {answer.question.replace('【關鍵題】', '')}
+                                                        </div>
+                                                    </div>
+                                                    <span className={`text-sm font-bold ${
+                                                        answer.score === 10 ? 'text-green-700' : 
+                                                        answer.score === 5 ? 'text-yellow-700' : 'text-red-700'
+                                                    }`}>
+                                                        {answer.score}分
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 詳細分數 */}
+                                <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-6 mb-6">
+                                    <h3 className="text-lg font-bold text-gray-800 mb-4">📊 詳細評分</h3>
+                                    <div className="space-y-3">
+                                        {Object.values(answers).map((answer, index) => (
+                                            <div key={index} className="flex items-start gap-3 pb-3 border-b border-gray-200 last:border-0">
+                                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                                    answer.critical ? 'bg-amber-200 text-amber-800' : 'bg-slate-200 text-slate-700'
+                                                }`}>
+                                                    {index + 1}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="text-sm text-gray-600 mb-1">
+                                                        {answer.question}
+                                                        {answer.critical && <span className="ml-2 text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full">關鍵題</span>}
+                                                    </div>
+                                                    <div className="text-sm text-gray-800 font-medium">{answer.answer}</div>
+                                                </div>
+                                                <div className={`flex-shrink-0 px-3 py-1 rounded-full text-sm font-bold ${
+                                                    answer.score === 10 ? 'bg-green-100 text-green-700' :
+                                                    answer.score === 5 ? 'bg-yellow-100 text-yellow-700' :
+                                                    'bg-red-100 text-red-700'
+                                                }`}>
+                                                    {answer.score}分
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 建議行動 */}
+                                <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-6 mb-6">
+                                    <h3 className="text-lg font-bold text-gray-800 mb-3">💡 {result.recommendation}</h3>
+                                    <p className="text-gray-700 leading-relaxed mb-3">{result.action}</p>
+                                    <div className="bg-white rounded-lg p-4 border border-slate-200">
+                                        <p className="text-sm text-gray-600 mb-2">📞 聯絡方式</p>
+                                        <p className="text-gray-800 font-medium">{result.contact}</p>
+                                    </div>
+                                </div>
+
+                                {/* 法律聲明 */}
+                                <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6">
+                                    <p className="text-xs text-gray-600 mb-2">📄 重要聲明</p>
+                                    <p className="text-sm text-gray-700 leading-relaxed">
+                                        此評估結果將作為術前準備度評估的參考依據，並可能影響手術排程決定。
+                                        本評估結果已由您本人完成，並理解上述內容。此文件可能作為病歷與知情同意文件的一部分保存。
+                                    </p>
+                                </div>
+
+                                {/* 診所資訊 */}
+                                <div className="text-center pt-6 border-t border-gray-200">
+                                    <div className="mb-3">
+                                        <div className="inline-block bg-gradient-to-r from-slate-700 to-amber-600 text-white px-6 py-2 rounded-full text-sm font-bold">
+                                            桃園高美泌尿科診所
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-600 font-medium mb-1">陳冠廷 院長</p>
+                                    <p className="text-sm text-gray-500">桃園市桃園區</p>
+                                    <p className="text-xs text-gray-400 mt-3">
+                                        評估日期：{testDate.toLocaleDateString('zh-TW')} {testDate.toLocaleTimeString('zh-TW')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 按鈕區（不包含在PDF中） */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+                            <button 
+                                onClick={exportToPDF}
+                                disabled={isExporting}
+                                className={`${
+                                    isExporting 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black'
+                                } text-white py-4 px-6 rounded-xl font-semibold transition-all shadow-lg flex items-center justify-center gap-2`}
+                            >
+                                <span className="text-xl">📥</span>
+                                <span>{isExporting ? '生成中...' : '下載評估結果 PDF'}</span>
+                            </button>
+                            
+                            <button 
+                                onClick={restart}
+                                className="bg-white border-2 border-slate-300 text-slate-700 py-4 px-6 rounded-xl font-semibold hover:bg-slate-50 transition-all"
+                            >
+                                重新評估
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const question = questions[currentQuestion];
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+
+            return (
+                <div className="max-w-3xl mx-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-amber-600 text-white p-8 relative overflow-hidden">
+                            {IMAGES.header && (
+                                <div className="absolute inset-0 opacity-20">
+                                    <img src={IMAGES.header} alt="Header" className="w-full h-full object-cover" />
+                                </div>
+                            )}
+                            <div className="absolute top-0 right-0 text-9xl opacity-5">💼</div>
+                            <div className="relative z-10">
+                                <div className="text-amber-200 text-sm font-medium mb-2">VASECTOMY READINESS ASSESSMENT</div>
+                                <h1 className="text-4xl font-bold mb-2">紳士結紮資格檢定</h1>
+                                <p className="text-slate-200 text-lg">評估您的結紮準備度</p>
+                            </div>
+                        </div>
+
+                        {/* Progress */}
+                        <div className="bg-gray-200 h-3">
+                            <div 
+                                className="bg-gradient-to-r from-slate-600 to-amber-500 h-full transition-all duration-500 ease-out"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+
+                        {/* Question Image */}
+                        {question.image && (
+                            <div className="w-full h-48 overflow-hidden">
+                                <img 
+                                    src={question.image} 
+                                    alt={`Question ${currentQuestion + 1}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        )}
+
+                        {/* Content */}
+                        <div className="p-8">
+                            {/* Question Header */}
+                            <div className="mb-8">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-5xl">{question.icon}</span>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-amber-600 font-bold text-sm">第 {currentQuestion + 1} 題 / 共 {questions.length} 題</span>
+                                            {question.critical && (
+                                                <span className="bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded-full font-bold">
+                                                    關鍵題
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">每題10分，滿分100分</div>
+                                    </div>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-800 leading-relaxed">{question.question}</h2>
+                            </div>
+
+                            {/* Options */}
+                            <div className="space-y-3">
+                                {question.options.map((option, index) => {
+                                    let borderColor = "border-gray-200 hover:border-amber-500";
+                                    let bgColor = "hover:bg-amber-50";
+                                    let textColor = "text-gray-700 group-hover:text-amber-700";
+                                    let scoreColor = "text-gray-400 group-hover:text-amber-500";
+                                    
+                                    if (option.score === 10) {
+                                        borderColor = "border-green-200 hover:border-green-500";
+                                        bgColor = "hover:bg-green-50";
+                                        textColor = "text-gray-700 group-hover:text-green-700";
+                                        scoreColor = "text-gray-400 group-hover:text-green-500";
+                                    } else if (option.score === 0) {
+                                        borderColor = "border-red-200 hover:border-red-500";
+                                        bgColor = "hover:bg-red-50";
+                                        textColor = "text-gray-700 group-hover:text-red-700";
+                                        scoreColor = "text-gray-400 group-hover:text-red-500";
+                                    }
+                                    
+                                    return (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleAnswer(option.score)}
+                                            className={`w-full text-left p-5 rounded-xl border-2 ${borderColor} ${bgColor} transition-all group shadow-sm hover:shadow-md`}
+                                        >
+                                            <div className="flex items-start justify-between gap-4">
+                                                <span className={`${textColor} font-medium leading-relaxed flex-1`}>
+                                                    {option.text}
+                                                </span>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={`text-sm ${scoreColor} font-semibold`}>
+                                                        {option.score}分
+                                                    </span>
+                                                    {option.score === 10 && <span className="text-xs text-green-500">✓ 最佳</span>}
+                                                    {option.score === 0 && <span className="text-xs text-red-500">⚠ 需注意</span>}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Info Box */}
+                            <div className="mt-8 bg-slate-50 border border-slate-200 rounded-lg p-4">
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    💡 <strong>評分說明：</strong>選擇最符合您實際情況的選項。
+                                    {question.critical && <span className="text-amber-700 font-bold"> 本題為關鍵題，答案將影響最終評級。</span>}
+                                    誠實作答將幫助我們更準確評估您的準備度，這對您的手術安全至關重要。
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-gradient-to-r from-slate-50 to-amber-50 px-8 py-4 border-t border-gray-200">
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-slate-700">桃園高美泌尿科診所</span>
+                                    <span className="text-gray-400">|</span>
+                                    <span>陳冠廷 院長</span>
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                    {testDate.toLocaleDateString('zh-TW')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
