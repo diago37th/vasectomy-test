@@ -38,7 +38,7 @@
     </style>
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-50 to-amber-50 min-h-screen py-8 px-4">
+<body class="bg-gradient-to-br from-slate-100 to-blue-100 min-h-screen py-8 px-4">
     <div id="root"></div>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -230,7 +230,7 @@
                         recommendation: "建議行動",
                         action: "您可以直接預約門診，與陳冠廷院長討論手術細節與時程安排。我們將優先為您安排手術時段。",
                         contact: "請透過 Facebook 粉絲專頁【桃園高美泌尿科】私訊預約，並下載您的評估結果PDF回傳給我們",
-                        color: "from-amber-400 to-yellow-600",
+                        color: "from-slate-700 to-slate-900",
                         bgColor: "bg-amber-50",
                         borderColor: "border-amber-300",
                         image: IMAGES.resultA
@@ -252,7 +252,7 @@
                         recommendation: "建議行動",
                         action: "建議先來門診諮詢，讓陳冠廷院長為您詳細說明，解答您的疑慮後再做決定。不要急著動刀，給自己更多思考時間。",
                         contact: "請透過 Facebook 粉絲專頁【桃園高美泌尿科】私訊預約諮詢門診",
-                        color: "from-orange-400 to-amber-500",
+                        color: "from-blue-600 to-slate-700",
                         bgColor: "bg-orange-50",
                         borderColor: "border-orange-300",
                         image: IMAGES.resultB
@@ -265,7 +265,7 @@
                         recommendation: "建議行動",
                         action: "建議您先暫緩此決定，維持現有的避孕方式。給自己與伴侶更多時間思考和討論。本診所目前不建議為您進行此手術。",
                         contact: "如需諮詢請透過 Facebook 粉絲專頁【桃園高美泌尿科】私訊，或再次檢視您的決定",
-                        color: "from-slate-400 to-slate-600",
+                        color: "from-gray-500 to-gray-700",
                         bgColor: "bg-slate-50",
                         borderColor: "border-slate-300",
                         image: IMAGES.resultC
@@ -542,7 +542,9 @@
                             {/* Question Header */}
                             <div className="mb-8">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <span className="text-5xl">{question.icon}</span>
+                                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+    Q{currentQuestion + 1}
+</div>
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-amber-600 font-bold text-sm">第 {currentQuestion + 1} 題 / 共 {questions.length} 題</span>
